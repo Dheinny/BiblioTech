@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: bibliotech
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bibliotech
+    username: admin
+    password: admin
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+  logging:
+    level:
+      org.hibernate.SQL: DEBUG
+      org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  messages:
+    basename: messages
+    encoding: UTF-8
+    #fallback-to-system-locale: false
