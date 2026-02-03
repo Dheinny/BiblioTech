@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/books")
@@ -28,5 +29,17 @@ public class BookController {
     @GetMapping
     public ResponseEntity<List<BookResponseDTO>> listAll() {
         return ResponseEntity.ok(bookService.findAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BookResponseDTO> findBook(@PathVariable UUID id) {
+        BookResponseDTO response = bookService.findById(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        bookService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }
