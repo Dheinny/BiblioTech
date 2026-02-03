@@ -3,7 +3,6 @@ package com.fenix.bibliotech.exception;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -25,18 +24,18 @@ public class GlobalExceptionHandler {
     //1. Handles Business Rules violations. (e.g.: ISBN duplicated)
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex, Locale locale) {
-        String errorMessage = messageSource.getMessage(ex.getMessage(), null, locale);
-
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                errorMessage,
-                LocalDateTime.now()
-        );
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return builtErrorResponseEntity(ex, HttpStatus.BAD_REQUEST, locale);
     }
 
-    // 2. Handles Bean Validation errors to @Valid (required fields, etc)
+    //2. Handles Resources not found
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex,
+                                                                         Locale locale) {
+        return builtErrorResponseEntity(ex, HttpStatus.NOT_FOUND, locale);
+    }
+
+
+    // 3. Handles Bean Validation errors to @Valid (required fields, etc)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex){
@@ -48,6 +47,19 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
         return errors;
+    }
+
+    private ResponseEntity<ErrorResponse> builtErrorResponseEntity(BusinessException ex,
+                                                                   HttpStatus httpStatus, Locale locale) {
+        String errorMessage = messageSource.getMessage(ex.getMessage(), null, locale);
+
+        ErrorResponse error = new ErrorResponse(
+                httpStatus.value(),
+                errorMessage,
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity.status(httpStatus).body(error);
     }
 }
 
