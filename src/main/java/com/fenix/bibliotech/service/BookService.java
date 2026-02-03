@@ -37,7 +37,7 @@ public class BookService {
     }
 
     public BookResponseDTO findById(UUID id) {
-        return mapper.toResponse(this.findEntityById(id));
+        return mapper.toResponse(findEntityById(id));
     }
 
     public List<BookResponseDTO> findAll() {
@@ -47,8 +47,9 @@ public class BookService {
                 .toList();
     }
 
+    @Transactional
     public void deleteById(UUID id){
-        repository.delete(this.findEntityById(id));
+        repository.delete(findEntityById(id));
     }
 
     private Book findEntityById(UUID id) {
