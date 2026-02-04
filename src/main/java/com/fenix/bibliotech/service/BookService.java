@@ -14,8 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
-import static java.util.stream.Collectors.toList;
-
 @Service
 @RequiredArgsConstructor
 public class BookService {
@@ -33,7 +31,7 @@ public class BookService {
         Book book = mapper.toEntity(bookRequest);
 
         Book savedBook = repository.save(book);
-        return mapper.toResponse(book);
+        return mapper.toResponse(savedBook);
     }
 
     public BookResponseDTO findById(UUID id) {
