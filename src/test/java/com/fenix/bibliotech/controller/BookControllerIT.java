@@ -3,12 +3,9 @@ package com.fenix.bibliotech.controller;
 import com.fenix.bibliotech.domain.Book;
 import com.fenix.bibliotech.factory.BookFactory;
 import com.fenix.bibliotech.repository.BookRepository;
-import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,13 +13,8 @@ import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,7 +56,7 @@ public class BookControllerIT {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.title").value(book.getTitle()))
-                .andExpect(jsonPath("$.author").value("Joshua Bloch"));
+                .andExpect(jsonPath("$.author").value(book.getAuthor()));
     }
 
     @Test
@@ -74,14 +66,12 @@ public class BookControllerIT {
         UUID nonExistentId = UUID.randomUUID();
 
         // WHEN & THEN
-        String expectedMessage = messageSource.getMessage(
-                "book.not.found", null, new Locale("pt", "BR"));
         mockMvc.perform(get("/api/books/" + nonExistentId)
                         .header("Accept-Language", "pt-BR")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value("404"))
-                .andExpect(jsonPath("$.message").value(expectedMessage))
+                .andExpect(jsonPath("$.message").value(getMessage("book.not.found")))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
     }
 
@@ -93,11 +83,34 @@ public class BookControllerIT {
 
         repository.save(book);
 
-        //When & Then
-        ResultActions result = mockMvc.perform(delete("/api/books/{id}", book.getId()))
+        //WHEN
+        mockMvc.perform(delete("/api/books/{id}", book.getId()))
                 .andExpect(status().isNoContent());
 
+        // THEN
         Boolean existsBook = repository.existsById(book.getId());
         assertThat(existsBook).isFalse();
+    }
+
+    @Test
+    @DisplayName("Deve retornar 404 indicando que o livro a ser deletado não existe no banco")
+    public void shouldReturn404WhenDeleteNonExistentBook() throws Exception {
+        // GIVEN
+        UUID deleteId = UUID.randomUUID();
+
+        // WHEN
+        mockMvc.perform(delete("/api/books/{id}", deleteId)
+                        .header("Accept-Language", "pt-BR")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value("404"))
+                .andExpect(jsonPath("$.message")
+                        .value(getMessage("book.not.found")))
+                .andExpect(jsonPath("$.timestamp").isNotEmpty());
+    }
+
+    public String getMessage(String code) {
+        return messageSource.getMessage(
+                code, null, new Locale("pt", "BR"));
     }
 }
