@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/books")
-@RequiredArgsConstructor // Cria o construtor pra injetar o Repository automaticamente
+@RequiredArgsConstructor // Cria o construtor pra injetar o Service automaticamente
 public class BookController {
 
     private final BookService bookService;
