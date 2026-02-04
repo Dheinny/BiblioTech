@@ -1,7 +1,10 @@
 package com.fenix.bibliotech.controller;
 
 import com.fenix.bibliotech.domain.Book;
+import com.fenix.bibliotech.factory.BookFactory;
 import com.fenix.bibliotech.repository.BookRepository;
+import org.assertj.core.api.AssertionsForClassTypes;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,10 +16,17 @@ import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,18 +54,16 @@ public class BookControllerIT {
     @DisplayName("Deve retornar 200 e o livro quando o ID existir")
     void shouldReturn200WhenIdExists() throws Exception {
         // GIVEN
-        Book book = Book.builder()
-                .title("Java Efetivo")
-                .author("Joshua Bloch")
-                .isbn("987-8576082675").build();
+        Book book = BookFactory.BookValid1();
 
         Book savedBook = repository.save(book);
 
         // WHEN & THEN
         mockMvc.perform(get("/api/books/" + savedBook.getId())
-                .accept(MediaType.APPLICATION_JSON))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Java Efetivo"))
+                .andExpect(jsonPath("$.id").isNotEmpty())
+                .andExpect(jsonPath("$.title").value(book.getTitle()))
                 .andExpect(jsonPath("$.author").value("Joshua Bloch"));
     }
 
@@ -75,5 +83,21 @@ public class BookControllerIT {
                 .andExpect(jsonPath("$.status").value("404"))
                 .andExpect(jsonPath("$.message").value(expectedMessage))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 204 quando um livro existente é deletado")
+    public void shouldReturn204WhenDeleteIsSuccessful() throws Exception {
+        // GIVEN
+        Book book = BookFactory.BookValid1();
+
+        repository.save(book);
+
+        //When & Then
+        ResultActions result = mockMvc.perform(delete("/api/books/{id}", book.getId()))
+                .andExpect(status().isNoContent());
+
+        Boolean existsBook = repository.existsById(book.getId());
+        assertThat(existsBook).isFalse();
     }
 }
