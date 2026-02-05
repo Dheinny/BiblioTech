@@ -1,6 +1,8 @@
 package com.fenix.bibliotech.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fenix.bibliotech.domain.Book;
+import com.fenix.bibliotech.dto.request.BookRequestDTO;
 import com.fenix.bibliotech.factory.BookFactory;
 import com.fenix.bibliotech.repository.BookRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,10 +20,9 @@ import java.util.Locale;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -37,9 +38,29 @@ public class BookControllerIT {
     @Autowired
     private MessageSource messageSource;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     void setUp() {
         repository.deleteAll();
+    }
+
+    @Test
+    void shouldReturn201WhenCreateBookWithSuccess() throws Exception {
+        // GIVEN
+        BookRequestDTO bookDTO = BookFactory.bookToCreateValid();
+
+        mockMvc.perform(post("/api/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bookDTO)))
+                .andExpect(status().isCreated())
+                // Valida se o Header Location existe e tem o caminho correto
+                .andExpect(header().exists("Location"))
+                .andExpect(header().string("Location", containsString("/api/books/")))
+                .andExpect(jsonPath("$.id").isNotEmpty())
+                .andExpect(jsonPath("$.title").value(bookDTO.title()))
+                .andExpect(jsonPath("$.author").value(bookDTO.author()));
     }
 
     @Test
