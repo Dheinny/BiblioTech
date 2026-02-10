@@ -1,7 +1,6 @@
 package com.fenix.bibliotech.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.util.UUID;
@@ -25,6 +24,6 @@ public class BookLicense {
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
-    @Column(nullable = false)
+    @Builder.Default
     private Boolean active = true;
 }

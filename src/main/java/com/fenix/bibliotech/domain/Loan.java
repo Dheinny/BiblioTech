@@ -19,7 +19,7 @@ public class Loan {
     private UUID id;
 
     @Column(nullable = false)
-    private String customerName;
+    private UUID customerId;
 
     @Column(nullable = false)
     private LocalDate loanDate, dueDate;
