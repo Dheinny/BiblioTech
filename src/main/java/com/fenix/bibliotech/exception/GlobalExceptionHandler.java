@@ -51,7 +51,7 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ErrorResponse> builtErrorResponseEntity(BusinessException ex,
                                                                    HttpStatus httpStatus, Locale locale) {
-        String errorMessage = messageSource.getMessage(ex.getMessage(), null, locale);
+        String errorMessage = messageSource.getMessage(ex.getMessage(), ex.getArgs(), locale);
 
         ErrorResponse error = new ErrorResponse(
                 httpStatus.value(),
@@ -64,4 +64,4 @@ public class GlobalExceptionHandler {
 }
 
 // Record for business error answer patterning
-record ErrorResponse(int status, String message, LocalDateTime timestamp) {};
+record ErrorResponse(int status, String message, LocalDateTime timestamp) {}
