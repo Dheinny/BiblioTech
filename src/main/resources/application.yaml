@@ -1,3 +1,7 @@
+app:
+  loan:
+    default-term-days: 14
+
 spring:
   application:
     name: bibliotech
