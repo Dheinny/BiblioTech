@@ -33,7 +33,7 @@ public class BookLicenseRepositoryTest {
         BookLicense bookLicense = bookFactory.createLicenseNeverUsed(book);
 
         // Act
-        Optional<BookLicense> blFound = repository.findAvailableLicense(book);
+        Optional<BookLicense> blFound = repository.findAvailableLicense(book.getId());
 
         // Assert
         assertThat(blFound).isPresent();
@@ -55,7 +55,7 @@ public class BookLicenseRepositoryTest {
         Book book = bookFactory.createBookBase();
 
         // Act
-        Optional<BookLicense> blFound = repository.findAvailableLicense(book);
+        Optional<BookLicense> blFound = repository.findAvailableLicense(book.getId());
 
         // Assert
         assertThat(blFound).isNotPresent();
@@ -69,7 +69,7 @@ public class BookLicenseRepositoryTest {
         BookLicense license = bookFactory.createLicenseWithLoanReturned(book);
 
         // Act
-        Optional<BookLicense> blFound = repository.findAvailableLicense(book);
+        Optional<BookLicense> blFound = repository.findAvailableLicense(book.getId());
 
         // Assert
         assertThat(blFound).isPresent().get()
@@ -87,7 +87,7 @@ public class BookLicenseRepositoryTest {
         bookFactory.createLicenseLoaned(book);
 
         // Act
-        Optional<BookLicense> blFound = repository.findAvailableLicense(book);
+        Optional<BookLicense> blFound = repository.findAvailableLicense(book.getId());
 
         // Arrange
         assertThat(blFound).isNotPresent();
@@ -103,7 +103,7 @@ public class BookLicenseRepositoryTest {
         BookLicense licenseFree = bookFactory.createLicenseWithLoanReturned(book);
 
         // Act
-        Optional<BookLicense> blFound = repository.findAvailableLicense(book);
+        Optional<BookLicense> blFound = repository.findAvailableLicense(book.getId());
 
         // Assert
         assertThat(blFound).isPresent().get()
@@ -122,7 +122,7 @@ public class BookLicenseRepositoryTest {
         bookFactory.createLicenseLoaned(book, "LIC2");
 
         // Act
-        Optional<BookLicense> blFound = repository.findAvailableLicense(book);
+        Optional<BookLicense> blFound = repository.findAvailableLicense(book.getId());
 
         // Assert
         assertThat(blFound).isNotPresent();
@@ -137,7 +137,7 @@ public class BookLicenseRepositoryTest {
         bookFactory.createLicenseWithLoanReturned(book, "LIC2");
 
         // Act
-        Optional<BookLicense> blFound = repository.findAvailableLicense(book);
+        Optional<BookLicense> blFound = repository.findAvailableLicense(book.getId());
 
         // Assert
         assertThat(blFound).isPresent().get()
@@ -152,7 +152,7 @@ public class BookLicenseRepositoryTest {
         bookFactory.createLicenseInactive(book);
 
         // Act
-        Optional<BookLicense> blFound = repository.findAvailableLicense(book);
+        Optional<BookLicense> blFound = repository.findAvailableLicense(book.getId());
 
         // Assert
         assertThat(blFound).isNotPresent();
