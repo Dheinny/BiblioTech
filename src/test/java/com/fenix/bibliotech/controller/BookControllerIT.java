@@ -1,7 +1,7 @@
 package com.fenix.bibliotech.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fenix.bibliotech.domain.Book;
+import com.fenix.bibliotech.domain.model.Book;
 import com.fenix.bibliotech.dto.request.BookRequestDTO;
 import com.fenix.bibliotech.factory.BookFactory;
 import com.fenix.bibliotech.repository.BookRepository;

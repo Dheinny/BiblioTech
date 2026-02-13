@@ -1,6 +1,6 @@
 package com.fenix.bibliotech.mapper;
 
-import com.fenix.bibliotech.domain.Book;
+import com.fenix.bibliotech.domain.model.Book;
 import com.fenix.bibliotech.dto.request.BookRequestDTO;
 import com.fenix.bibliotech.dto.response.BookResponseDTO;
 import org.springframework.stereotype.Component;

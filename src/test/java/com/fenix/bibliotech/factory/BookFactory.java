@@ -1,6 +1,6 @@
 package com.fenix.bibliotech.factory;
 
-import com.fenix.bibliotech.domain.Book;
+import com.fenix.bibliotech.domain.model.Book;
 import com.fenix.bibliotech.dto.request.BookRequestDTO;
 
 public class BookFactory {

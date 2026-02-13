@@ -1,6 +1,6 @@
 package com.fenix.bibliotech.service;
 
-import com.fenix.bibliotech.domain.Book;
+import com.fenix.bibliotech.domain.model.Book;
 import com.fenix.bibliotech.dto.request.BookRequestDTO;
 import com.fenix.bibliotech.dto.response.BookResponseDTO;
 import com.fenix.bibliotech.exception.BusinessException;

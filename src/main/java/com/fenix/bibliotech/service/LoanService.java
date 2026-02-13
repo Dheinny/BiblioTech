@@ -1,10 +1,11 @@
 package com.fenix.bibliotech.service;
 
-import com.fenix.bibliotech.domain.BookLicense;
-import com.fenix.bibliotech.domain.Loan;
-import com.fenix.bibliotech.domain.LoanPolicy;
+import com.fenix.bibliotech.domain.model.BookLicense;
+import com.fenix.bibliotech.domain.model.Loan;
+import com.fenix.bibliotech.domain.policy.LoanPolicy;
 import com.fenix.bibliotech.dto.request.LoanRequestDTO;
 import com.fenix.bibliotech.dto.response.LoanResponseDTO;
+import com.fenix.bibliotech.exception.ResourceNotFoundException;
 import com.fenix.bibliotech.mapper.LoanMapper;
 import com.fenix.bibliotech.repository.BookLicenseRepository;
 import com.fenix.bibliotech.repository.LoanRepository;
@@ -15,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -29,15 +29,17 @@ public class LoanService {
     private final LoanPolicy loanPolicy;
     private final Clock clock;
 
-
     @Transactional
     public LoanResponseDTO checkoutBook(LoanRequestDTO loanDto) {
         UUID customerID = UUID.nameUUIDFromBytes(loanDto.customerName().getBytes(StandardCharsets.UTF_8));
 
-        Optional<BookLicense> bookLicense = bookLicenseRepository.findAvailableLicense(loanDto.bookId());
-        bookLicense.orElseThrow();
+        boolean hasActiveLicense = bookLicenseRepository.countByBookIdAndActiveTrue(loanDto.bookId()) > 0;
+        if (!hasActiveLicense) throw new ResourceNotFoundException("book.not.found", loanDto.bookId());
 
-        Loan loan = getLoan(customerID, bookLicense.get());
+        BookLicense bookLicense = bookLicenseRepository.findAvailableLicense(loanDto.bookId())
+                .orElseThrow(() -> new ResourceNotFoundException("loan.not.available"));
+
+        Loan loan = getLoan(customerID, bookLicense);
 
         return loanMapper.toResponse(
                 loanRepository.save(loan),

@@ -1,4 +1,4 @@
-package com.fenix.bibliotech.domain;
+package com.fenix.bibliotech.domain.policy;
 
 import com.fenix.bibliotech.config.LoanProperties;
 import lombok.RequiredArgsConstructor;

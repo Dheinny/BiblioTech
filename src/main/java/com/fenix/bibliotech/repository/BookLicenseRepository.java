@@ -1,7 +1,6 @@
 package com.fenix.bibliotech.repository;
 
-import com.fenix.bibliotech.domain.Book;
-import com.fenix.bibliotech.domain.BookLicense;
+import com.fenix.bibliotech.domain.model.BookLicense;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,10 +12,10 @@ import java.util.UUID;
 
 public interface BookLicenseRepository extends JpaRepository<BookLicense, UUID> {
     // Return total license for a book
-    long countByBook(Book book);
+    int countByBookId(UUID bookId);
 
     // Return total of active licenses for a book
-    long countByBookAndActiveTrue(Book book);
+    int countByBookIdAndActiveTrue(UUID bookId);
 
     @Query("SELECT bl FROM BookLicense bl WHERE bl.book.id = :bookId AND bl.active = TRUE " +
             "AND NOT " +

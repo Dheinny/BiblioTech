@@ -1,8 +1,8 @@
 package com.fenix.bibliotech.factory;
 
-import com.fenix.bibliotech.domain.Book;
-import com.fenix.bibliotech.domain.BookLicense;
-import com.fenix.bibliotech.domain.Loan;
+import com.fenix.bibliotech.domain.model.Book;
+import com.fenix.bibliotech.domain.model.BookLicense;
+import com.fenix.bibliotech.domain.model.Loan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.context.TestComponent;
 
