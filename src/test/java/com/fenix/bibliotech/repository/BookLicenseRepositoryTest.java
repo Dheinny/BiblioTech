@@ -1,7 +1,7 @@
 package com.fenix.bibliotech.repository;
 
-import com.fenix.bibliotech.domain.Book;
-import com.fenix.bibliotech.domain.BookLicense;
+import com.fenix.bibliotech.domain.model.Book;
+import com.fenix.bibliotech.domain.model.BookLicense;
 import com.fenix.bibliotech.factory.BookLicenseRepositoryFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,6 @@
 package com.fenix.bibliotech.mapper;
 
-import com.fenix.bibliotech.domain.Loan;
+import com.fenix.bibliotech.domain.model.Loan;
 import com.fenix.bibliotech.dto.response.LoanResponseDTO;
 import org.springframework.stereotype.Component;
 

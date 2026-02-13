@@ -1,4 +1,4 @@
-package com.fenix.bibliotech.domain;
+package com.fenix.bibliotech.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;

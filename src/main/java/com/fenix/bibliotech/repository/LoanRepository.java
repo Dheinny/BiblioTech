@@ -1,7 +1,7 @@
 package com.fenix.bibliotech.repository;
 
-import com.fenix.bibliotech.domain.BookLicense;
-import com.fenix.bibliotech.domain.Loan;
+import com.fenix.bibliotech.domain.model.BookLicense;
+import com.fenix.bibliotech.domain.model.Loan;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
