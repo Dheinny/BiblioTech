@@ -51,13 +51,13 @@ public class BookControllerIT {
         // GIVEN
         BookRequestDTO bookDTO = BookFactory.bookToCreateValid();
 
-        mockMvc.perform(post("/api/books")
+        mockMvc.perform(post("/api/v1/books")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bookDTO)))
                 .andExpect(status().isCreated())
                 // Valida se o Header Location existe e tem o caminho correto
                 .andExpect(header().exists("Location"))
-                .andExpect(header().string("Location", containsString("/api/books/")))
+                .andExpect(header().string("Location", containsString("/api/v1/books/")))
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.title").value(bookDTO.title()))
                 .andExpect(jsonPath("$.author").value(bookDTO.author()));
@@ -72,7 +72,7 @@ public class BookControllerIT {
         Book savedBook = repository.save(book);
 
         // WHEN & THEN
-        mockMvc.perform(get("/api/books/" + savedBook.getId())
+        mockMvc.perform(get("/api/v1/books/" + savedBook.getId())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -87,7 +87,7 @@ public class BookControllerIT {
         UUID nonExistentId = UUID.randomUUID();
 
         // WHEN & THEN
-        mockMvc.perform(get("/api/books/" + nonExistentId)
+        mockMvc.perform(get("/api/v1/books/" + nonExistentId)
                         .header("Accept-Language", "pt-BR")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
@@ -105,7 +105,7 @@ public class BookControllerIT {
         repository.save(book);
 
         //WHEN
-        mockMvc.perform(delete("/api/books/{id}", book.getId()))
+        mockMvc.perform(delete("/api/v1/books/{id}", book.getId()))
                 .andExpect(status().isNoContent());
 
         // THEN
@@ -120,7 +120,7 @@ public class BookControllerIT {
         UUID deleteId = UUID.randomUUID();
 
         // WHEN
-        mockMvc.perform(delete("/api/books/{id}", deleteId)
+        mockMvc.perform(delete("/api/v1/books/{id}", deleteId)
                         .header("Accept-Language", "pt-BR")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
