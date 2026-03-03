@@ -1,5 +1,6 @@
 package com.fenix.bibliotech.service;
 
+import com.fenix.bibliotech.domain.helper.CustomerIdentifier;
 import com.fenix.bibliotech.domain.model.BookLicense;
 import com.fenix.bibliotech.domain.model.Loan;
 import com.fenix.bibliotech.domain.policy.LoanPolicy;
@@ -31,7 +32,7 @@ public class LoanService {
 
     @Transactional
     public LoanResponseDTO checkoutBook(LoanRequestDTO loanDto) {
-        UUID customerID = UUID.nameUUIDFromBytes(loanDto.customerName().getBytes(StandardCharsets.UTF_8));
+        UUID customerID = CustomerIdentifier.generateId(loanDto.customerName());
 
         boolean hasActiveLicense = bookLicenseRepository.countByBookIdAndActiveTrue(loanDto.bookId()) > 0;
         if (!hasActiveLicense) throw new ResourceNotFoundException("book.not.found", loanDto.bookId());
