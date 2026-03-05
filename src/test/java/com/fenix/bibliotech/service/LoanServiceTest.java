@@ -5,6 +5,7 @@ import com.fenix.bibliotech.domain.model.BookLicense;
 import com.fenix.bibliotech.domain.model.Loan;
 import com.fenix.bibliotech.domain.policy.LoanPolicy;
 import com.fenix.bibliotech.dto.request.LoanRequestDTO;
+import com.fenix.bibliotech.dto.response.LoanResponseDTO;
 import com.fenix.bibliotech.exception.ResourceNotFoundException;
 import com.fenix.bibliotech.mapper.LoanMapper;
 import com.fenix.bibliotech.repository.BookLicenseRepository;
@@ -16,16 +17,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -39,15 +40,14 @@ public class LoanServiceTest {
     private LoanRepository loanRepository;
 
     @Mock
-    private LoanMapper loanMapper;
-
-    @Mock
     private LoanPolicy loanPolicy;
+
+    @Spy
+    LoanMapper loanMapper = new LoanMapper();
 
     @InjectMocks
     private LoanService loanService;
 
-    @Autowired
     private LoanRequestDTO requestDTO;
     private UUID bookId;
 
@@ -61,8 +61,8 @@ public class LoanServiceTest {
         bookId = UUID.randomUUID();
         requestDTO = new LoanRequestDTO(bookId, "Fulano de Tal");
         fixedInstant = LocalDateTime.of(2026, 2, 13, 10, 0).toInstant(ZoneOffset.UTC);
-        when(clock.instant()).thenReturn(fixedInstant);
-        when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
+        lenient().when(clock.instant()).thenReturn(fixedInstant);
+        lenient().when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
     }
 
     @Test
@@ -75,7 +75,9 @@ public class LoanServiceTest {
                 .thenReturn(0);
 
         // WHEN & THEN
-        assertThrows(ResourceNotFoundException.class, () -> loanService.checkoutBook(requestDTO));
+        assertThatThrownBy(() -> loanService.checkoutBook(requestDTO))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("book.not.found");
 
         verify(bookLicenseRepository, never()).findAvailableLicense(any());
     }
@@ -91,7 +93,10 @@ public class LoanServiceTest {
                 .thenReturn(Optional.empty());
 
         // WHEN & THEN
-        assertThrows(ResourceNotFoundException.class, () -> loanService.checkoutBook(requestDTO));
+        assertThatThrownBy(() -> loanService.checkoutBook(requestDTO))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("loan.not.available");
+
         verify(bookLicenseRepository, atMostOnce()).findAvailableLicense(bookId);
     }
 
@@ -99,15 +104,28 @@ public class LoanServiceTest {
     @DisplayName("Deve realizar o empréstimo com sucesso quando os dados forem válidos")
     void shouldCreateLoanSuccessfuly() {
         // GIVEN
-        LocalDate dueDateExpected = LocalDate.ofInstant(fixedInstant, ZoneOffset.UTC)
-                .plusDays(14);
+        LocalDate loanDateExpected = LocalDate.ofInstant(fixedInstant, ZoneOffset.UTC);
+        LocalDate dueDateExpected = loanDateExpected.plusDays(14);
 
         UUID licenseID = UUID.randomUUID();
         String licenseCode = "COD1";
         BookLicense license = BookLicense.builder()
                 .id(licenseID)
                 .licenseCode(licenseCode)
-                .book(Book.builder().id(bookId).build())
+                .book(Book.builder().id(bookId).title("Livro1").build())
+                .build();
+
+        UUID customerIdExpected = UUID.nameUUIDFromBytes(
+                requestDTO.customerName()
+                        .getBytes(StandardCharsets.UTF_8));
+
+        LoanResponseDTO responseExpected = LoanResponseDTO.builder()
+                .customerId(customerIdExpected)
+                .customerName(requestDTO.customerName())
+                .bookTitle("Livro1")
+                .licenseCode("COD1")
+                .loanDate(loanDateExpected)
+                .dueDate(dueDateExpected)
                 .build();
 
         when(bookLicenseRepository.countByBookIdAndActiveTrue(bookId))
@@ -116,26 +134,29 @@ public class LoanServiceTest {
                 .thenReturn(Optional.of(license));
         when(loanPolicy.calculateDueDate(any()))
                 .thenReturn(dueDateExpected);
+        when(loanRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         ArgumentCaptor<Loan> loanCaptor = ArgumentCaptor.forClass(Loan.class);
 
         // WHEN
-        loanService.checkoutBook(requestDTO);
+        LoanResponseDTO loanResponse = loanService.checkoutBook(requestDTO);
 
         // THEN
         verify(loanRepository).save(loanCaptor.capture());
         Loan loanSaved = loanCaptor.getValue();
 
-        assertEquals(LocalDate.ofInstant(fixedInstant, ZoneOffset.UTC), loanSaved.getLoanDate());
-        assertEquals(dueDateExpected, loanSaved.getDueDate());
-        assertEquals(licenseID, loanSaved.getBookLicense().getId());
-        assertEquals(bookId, loanSaved.getBookLicense().getBook().getId());
+        assertThat(loanSaved)
+                .returns(loanDateExpected, Loan::getLoanDate)
+                .returns(dueDateExpected, Loan::getDueDate)
+                .returns(customerIdExpected, Loan::getCustomerId)
+                .extracting(Loan::getBookLicense)
+                .returns(licenseID, BookLicense::getId)
+                .returns(bookId, bkLicense -> bkLicense.getBook().getId());
 
-        UUID customerIdExpected = UUID.nameUUIDFromBytes(
-                requestDTO.customerName()
-                        .getBytes(StandardCharsets.UTF_8));
-        assertEquals(customerIdExpected, loanSaved.getCustomerId());
-
-        verify(loanMapper).toResponse(any(), eq(requestDTO.customerName()));
+        assertThat(loanResponse)
+                .usingRecursiveComparison()
+                .ignoringFields("id")
+                .isEqualTo(responseExpected);
     }
 }
