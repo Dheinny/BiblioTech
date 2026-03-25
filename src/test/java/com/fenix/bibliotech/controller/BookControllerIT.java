@@ -130,7 +130,7 @@ public class BookControllerIT {
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
     }
 
-    public String getMessage(String code) {
+    private String getMessage(String code) {
         return messageSource.getMessage(
                 code, null, new Locale("pt", "BR"));
     }
