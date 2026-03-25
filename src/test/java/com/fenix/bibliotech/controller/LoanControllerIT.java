@@ -8,10 +8,14 @@ import com.fenix.bibliotech.domain.model.Loan;
 import com.fenix.bibliotech.dto.request.LoanRequestDTO;
 import com.fenix.bibliotech.factory.LoanIntegrationFactory;
 import com.fenix.bibliotech.repository.LoanRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -19,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 @Import(LoanIntegrationFactory.class)
 public class LoanControllerIT {
+    private static final String BASE_URL = "/api/v1/loans";
 
     @Autowired
     private MockMvc mockMvc;
@@ -41,6 +47,9 @@ public class LoanControllerIT {
 
     @Autowired
     private LoanRepository loanRepository;
+
+    @Autowired
+    private MessageSource messageSource;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -58,7 +67,7 @@ public class LoanControllerIT {
         UUID customerIdExpected = CustomerIdentifier.generateId(customerName);
 
         // WHEN & THEN
-        mockMvc.perform(post("/api/v1/loans")
+        mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loanRequest)))
                 .andExpect(status().isCreated())
@@ -83,5 +92,26 @@ public class LoanControllerIT {
                     assertThat(l.getDueDate()).isAfter(l.getLoanDate());
                     assertThat(l.getReturnDate()).isNull();
                 });
+    }
+
+
+    @ParameterizedTest
+    @DisplayName("Deve retornar 400 indicando que os campos da solicitação de empréstimo estão inválidos.")
+    @MethodSource("com.fenix.bibliotech.factory.LoanIntegrationFactory#invalidLoanRequestProvider")
+    public void shouldReturn400WhenLoanFieldsAreInvalid(LoanRequestDTO loanRequest, String expectedField, String errorMessageCode) throws Exception {
+        // WHEN
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loanRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$." + expectedField).value(getMessage(errorMessageCode)));
+
+        // THEN
+        assertThat(loanRepository.findAll().isEmpty());
+    }
+
+    private String getMessage(String code) {
+        return messageSource.getMessage(
+                code, null, new Locale("pt", "BR"));
     }
 }
