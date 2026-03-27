@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -35,7 +34,7 @@ public class LoanService {
         UUID customerID = CustomerIdentifier.generateId(loanDto.customerName());
 
         boolean hasActiveLicense = bookLicenseRepository.countByBookIdAndActiveTrue(loanDto.bookId()) > 0;
-        if (!hasActiveLicense) throw new ResourceNotFoundException("book.not.found", loanDto.bookId());
+        if (!hasActiveLicense) throw new ResourceNotFoundException("loan.not.eligible.book");
 
         BookLicense bookLicense = bookLicenseRepository.findAvailableLicense(loanDto.bookId())
                 .orElseThrow(() -> new ResourceNotFoundException("loan.not.available"));

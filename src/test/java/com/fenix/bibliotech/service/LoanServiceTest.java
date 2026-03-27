@@ -77,7 +77,7 @@ public class LoanServiceTest {
         // WHEN & THEN
         assertThatThrownBy(() -> loanService.checkoutBook(requestDTO))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessage("book.not.found");
+                .hasMessage("loan.not.eligible.book");
 
         verify(bookLicenseRepository, never()).findAvailableLicense(any());
     }

@@ -1,6 +1,7 @@
 package com.fenix.bibliotech.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fenix.bibliotech.domain.constant.LoanNotFoundScenario;
 import com.fenix.bibliotech.domain.helper.CustomerIdentifier;
 import com.fenix.bibliotech.domain.model.Book;
 import com.fenix.bibliotech.domain.model.BookLicense;
@@ -24,11 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -94,7 +97,6 @@ public class LoanControllerIT {
                 });
     }
 
-
     @ParameterizedTest
     @DisplayName("Deve retornar 400 indicando que os campos da solicitação de empréstimo estão inválidos.")
     @MethodSource("com.fenix.bibliotech.factory.LoanIntegrationFactory#invalidLoanRequestProvider")
@@ -108,6 +110,29 @@ public class LoanControllerIT {
 
         // THEN
         assertThat(loanRepository.findAll().isEmpty());
+    }
+
+    @ParameterizedTest
+    @DisplayName("Deve retornar 404 quando o livro a ser alugado não estiver cadastrado no banco de dados ou estiver com todas licenças inativas")
+    @MethodSource("com.fenix.bibliotech.factory.LoanIntegrationFactory#notFoundBookEligibleToLoanProvider")
+    public void shouldReturn404WhenBookHasNoEligibleLicensesForLoan(LoanNotFoundScenario scenario) throws Exception {
+        // GIVEN
+        Map<LoanNotFoundScenario, UUID> bookByScenarioMap = loanFactory.createBookByScenarioMap();
+
+        LoanRequestDTO loanRequest = LoanRequestDTO.builder()
+                .bookId(bookByScenarioMap.get(scenario))
+                .customerName("Customer1")
+                .build();
+
+        // WHEN & THEN
+        mockMvc.perform(post(BASE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loanRequest)))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value("404"))
+                .andExpect(jsonPath("$.message")
+                        .value(getMessage(scenario.getExpectedMessageCode())));
     }
 
     private String getMessage(String code) {

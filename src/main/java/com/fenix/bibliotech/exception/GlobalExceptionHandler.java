@@ -34,7 +34,6 @@ public class GlobalExceptionHandler {
         return builtErrorResponseEntity(ex, HttpStatus.NOT_FOUND, locale);
     }
 
-
     // 3. Handles Bean Validation errors to @Valid (required fields, etc)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
