@@ -34,7 +34,14 @@ public class GlobalExceptionHandler {
         return builtErrorResponseEntity(ex, HttpStatus.NOT_FOUND, locale);
     }
 
-    // 3. Handles Bean Validation errors to @Valid (required fields, etc)
+    //3. Handles Conflict
+    @ExceptionHandler(ResourceConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflictException(ResourceConflictException ex,
+                                                                         Locale locale) {
+        return builtErrorResponseEntity(ex, HttpStatus.CONFLICT, locale);
+    }
+
+    //4. Handles Bean Validation errors to @Valid (required fields, etc)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex){

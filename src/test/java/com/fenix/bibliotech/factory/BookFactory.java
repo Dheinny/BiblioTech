@@ -1,6 +1,7 @@
 package com.fenix.bibliotech.factory;
 
 import com.fenix.bibliotech.domain.model.Book;
+import com.fenix.bibliotech.domain.model.BookLicense;
 import com.fenix.bibliotech.dto.request.BookRequestDTO;
 
 public class BookFactory {
@@ -39,4 +40,17 @@ public class BookFactory {
                 .pages(223)
                 .build();
     }
+
+    public static BookLicense getBookLicense(Book book, String licenseCode) {
+        return getBookLicense(book, licenseCode, true);
+    }
+
+    public static BookLicense getBookLicense(Book book, String licenseCode, boolean isActive) {
+        return BookLicense.builder()
+                .licenseCode(licenseCode)
+                .book(book)
+                .active(isActive)
+                .build();
+    }
+
 }

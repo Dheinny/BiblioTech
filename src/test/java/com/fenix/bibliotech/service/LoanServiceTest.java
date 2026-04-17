@@ -6,6 +6,7 @@ import com.fenix.bibliotech.domain.model.Loan;
 import com.fenix.bibliotech.domain.policy.LoanPolicy;
 import com.fenix.bibliotech.dto.request.LoanRequestDTO;
 import com.fenix.bibliotech.dto.response.LoanResponseDTO;
+import com.fenix.bibliotech.exception.ResourceConflictException;
 import com.fenix.bibliotech.exception.ResourceNotFoundException;
 import com.fenix.bibliotech.mapper.LoanMapper;
 import com.fenix.bibliotech.repository.BookLicenseRepository;
@@ -94,7 +95,7 @@ public class LoanServiceTest {
 
         // WHEN & THEN
         assertThatThrownBy(() -> loanService.checkoutBook(requestDTO))
-                .isInstanceOf(ResourceNotFoundException.class)
+                .isInstanceOf(ResourceConflictException.class)
                 .hasMessage("loan.not.available");
 
         verify(bookLicenseRepository, atMostOnce()).findAvailableLicense(bookId);

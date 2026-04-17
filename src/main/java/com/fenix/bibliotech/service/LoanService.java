@@ -6,6 +6,7 @@ import com.fenix.bibliotech.domain.model.Loan;
 import com.fenix.bibliotech.domain.policy.LoanPolicy;
 import com.fenix.bibliotech.dto.request.LoanRequestDTO;
 import com.fenix.bibliotech.dto.response.LoanResponseDTO;
+import com.fenix.bibliotech.exception.ResourceConflictException;
 import com.fenix.bibliotech.exception.ResourceNotFoundException;
 import com.fenix.bibliotech.mapper.LoanMapper;
 import com.fenix.bibliotech.repository.BookLicenseRepository;
@@ -30,20 +31,20 @@ public class LoanService {
     private final Clock clock;
 
     @Transactional
-    public LoanResponseDTO checkoutBook(LoanRequestDTO loanDto) {
-        UUID customerID = CustomerIdentifier.generateId(loanDto.customerName());
+    public LoanResponseDTO checkoutBook(LoanRequestDTO loanDTO) {
+        UUID customerID = CustomerIdentifier.generateId(loanDTO.customerName());
 
-        boolean hasActiveLicense = bookLicenseRepository.countByBookIdAndActiveTrue(loanDto.bookId()) > 0;
-        if (!hasActiveLicense) throw new ResourceNotFoundException("loan.not.eligible.book");
+        boolean hasActiveLicense = bookLicenseRepository.countByBookIdAndActiveTrue(loanDTO.bookId()) > 0;
+        if (!hasActiveLicense) throw new ResourceNotFoundException("loan.not.eligible.book", loanDTO.bookId());
 
-        BookLicense bookLicense = bookLicenseRepository.findAvailableLicense(loanDto.bookId())
-                .orElseThrow(() -> new ResourceNotFoundException("loan.not.available"));
+        BookLicense bookLicense = bookLicenseRepository.findAvailableLicense(loanDTO.bookId())
+                .orElseThrow(() -> new ResourceConflictException("loan.not.available", loanDTO.bookId()));
 
         Loan loan = getLoan(customerID, bookLicense);
 
         return loanMapper.toResponse(
                 loanRepository.save(loan),
-                loanDto.customerName()
+                loanDTO.customerName()
         );
     }
 
