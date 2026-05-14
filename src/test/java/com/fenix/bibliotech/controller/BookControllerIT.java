@@ -1,7 +1,7 @@
 package com.fenix.bibliotech.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fenix.bibliotech.domain.Book;
+import com.fenix.bibliotech.domain.model.Book;
 import com.fenix.bibliotech.dto.request.BookRequestDTO;
 import com.fenix.bibliotech.factory.BookFactory;
 import com.fenix.bibliotech.repository.BookRepository;
@@ -130,7 +130,7 @@ public class BookControllerIT {
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
     }
 
-    public String getMessage(String code) {
+    private String getMessage(String code) {
         return messageSource.getMessage(
                 code, null, new Locale("pt", "BR"));
     }

@@ -34,8 +34,14 @@ public class GlobalExceptionHandler {
         return builtErrorResponseEntity(ex, HttpStatus.NOT_FOUND, locale);
     }
 
+    //3. Handles Conflict
+    @ExceptionHandler(ResourceConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflictException(ResourceConflictException ex,
+                                                                         Locale locale) {
+        return builtErrorResponseEntity(ex, HttpStatus.CONFLICT, locale);
+    }
 
-    // 3. Handles Bean Validation errors to @Valid (required fields, etc)
+    //4. Handles Bean Validation errors to @Valid (required fields, etc)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex){
@@ -51,7 +57,7 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ErrorResponse> builtErrorResponseEntity(BusinessException ex,
                                                                    HttpStatus httpStatus, Locale locale) {
-        String errorMessage = messageSource.getMessage(ex.getMessage(), null, locale);
+        String errorMessage = messageSource.getMessage(ex.getMessage(), ex.getArgs(), locale);
 
         ErrorResponse error = new ErrorResponse(
                 httpStatus.value(),
@@ -64,4 +70,4 @@ public class GlobalExceptionHandler {
 }
 
 // Record for business error answer patterning
-record ErrorResponse(int status, String message, LocalDateTime timestamp) {};
+record ErrorResponse(int status, String message, LocalDateTime timestamp) {}

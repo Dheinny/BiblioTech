@@ -1,7 +1,8 @@
 package com.fenix.bibliotech.exception;
 
 public class ResourceNotFoundException extends BusinessException {
-    public ResourceNotFoundException(String message) {
-        super(message);
+    public ResourceNotFoundException(String message, Object... args) {
+        super(message, args);
+
     }
 }
