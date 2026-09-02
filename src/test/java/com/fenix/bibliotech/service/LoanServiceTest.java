@@ -12,6 +12,7 @@ import com.fenix.bibliotech.mapper.LoanMapper;
 import com.fenix.bibliotech.repository.BookLicenseRepository;
 import com.fenix.bibliotech.repository.LoanRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +53,7 @@ public class LoanServiceTest {
     private LoanRequestDTO requestDTO;
     private UUID bookId;
 
+
     @Mock
     private Clock clock;
 
@@ -81,6 +83,22 @@ public class LoanServiceTest {
                 .hasMessage("loan.not.eligible.book");
 
         verify(bookLicenseRepository, never()).findAvailableLicense(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException quando tentar devolver um empréstimo que não existe")
+    void shouldThrowExceptionWhenReturningNonExistentLoan() {
+        // GIVEN
+        UUID loanID = UUID.randomUUID();
+        when(loanRepository.findById(loanID))
+                .thenReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> loanService.returnBook(loanID))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("loan.returning.non.existent");
+
+        verify(loanRepository, atMostOnce()).findById(loanID);
     }
 
     @Test

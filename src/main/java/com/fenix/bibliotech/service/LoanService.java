@@ -6,6 +6,7 @@ import com.fenix.bibliotech.domain.model.Loan;
 import com.fenix.bibliotech.domain.policy.LoanPolicy;
 import com.fenix.bibliotech.dto.request.LoanRequestDTO;
 import com.fenix.bibliotech.dto.response.LoanResponseDTO;
+import com.fenix.bibliotech.dto.response.LoanReturnResponseDTO;
 import com.fenix.bibliotech.exception.ResourceConflictException;
 import com.fenix.bibliotech.exception.ResourceNotFoundException;
 import com.fenix.bibliotech.mapper.LoanMapper;
@@ -58,5 +59,12 @@ public class LoanService {
                 .bookLicense(bookLicense)
                 .build();
 
+    }
+
+    public LoanReturnResponseDTO returnBook(UUID loanID) {
+        Loan loan = loanRepository.findById(loanID)
+                .orElseThrow(() -> new ResourceNotFoundException("loan.returning.non.existent", loanID));
+
+        return null;
     }
 }
