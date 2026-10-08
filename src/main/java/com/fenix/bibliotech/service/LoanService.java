@@ -61,10 +61,26 @@ public class LoanService {
 
     }
 
-    public LoanReturnResponseDTO returnBook(UUID loanID) {
+    public LoanReturnResponseDTO returnBook(UUID loanID, UUID customerID) {
         Loan loan = loanRepository.findById(loanID)
                 .orElseThrow(() -> new ResourceNotFoundException("loan.returning.non.existent", loanID));
 
+        if (loan.getReturnDate() != null) {
+            throw new ResourceConflictException("loan.already.returned");
+        }
+
+        if (loan.getCustomerId().equals(customerID)) {
+            loan.setReturnDate(LocalDate.now(clock));
+
+            loanRepository.save(loan);
+
+            return LoanReturnResponseDTO.builder()
+                            .id(loan.getId()).bookTitle(loan.getBookLicense().getBook().getTitle())
+                            .loanDate(loan.getLoanDate())
+                            .dueDate(loan.getDueDate())
+                            .returnDate(loan.getReturnDate())
+                            .build();
+        }
         return null;
     }
 }

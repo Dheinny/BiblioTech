@@ -189,10 +189,6 @@ public class LoanControllerIT {
         );
     }
 
-    private String getMessage(String code) {
-        return getMessage(code, null);
-    }
-
     private String getMessage(String code, Object... args) {
         return messageSource.getMessage(
                 code, args, Locale.of("pt", "BR"));

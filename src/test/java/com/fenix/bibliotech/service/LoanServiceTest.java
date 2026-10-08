@@ -6,13 +6,13 @@ import com.fenix.bibliotech.domain.model.Loan;
 import com.fenix.bibliotech.domain.policy.LoanPolicy;
 import com.fenix.bibliotech.dto.request.LoanRequestDTO;
 import com.fenix.bibliotech.dto.response.LoanResponseDTO;
+import com.fenix.bibliotech.dto.response.LoanReturnResponseDTO;
 import com.fenix.bibliotech.exception.ResourceConflictException;
 import com.fenix.bibliotech.exception.ResourceNotFoundException;
 import com.fenix.bibliotech.mapper.LoanMapper;
 import com.fenix.bibliotech.repository.BookLicenseRepository;
 import com.fenix.bibliotech.repository.LoanRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -86,23 +86,7 @@ public class LoanServiceTest {
     }
 
     @Test
-    @DisplayName("Deve lançar ResourceNotFoundException quando tentar devolver um empréstimo que não existe")
-    void shouldThrowExceptionWhenReturningNonExistentLoan() {
-        // GIVEN
-        UUID loanID = UUID.randomUUID();
-        when(loanRepository.findById(loanID))
-                .thenReturn(Optional.empty());
-
-        // WHEN & THEN
-        assertThatThrownBy(() -> loanService.returnBook(loanID))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessage("loan.returning.non.existent");
-
-        verify(loanRepository, atMostOnce()).findById(loanID);
-    }
-
-    @Test
-    @DisplayName("Deve lançar ResourceNotFoundException quando não houver licença disponível")
+    @DisplayName("Deve lançar ResourceConflictException quando não houver licença disponível")
     void shouldThrowExceptionWhenNoLicenseIsAvailable() {
         // GIVEN
         when(bookLicenseRepository.countByBookIdAndActiveTrue(bookId))
@@ -121,15 +105,15 @@ public class LoanServiceTest {
 
     @Test
     @DisplayName("Deve realizar o empréstimo com sucesso quando os dados forem válidos")
-    void shouldCreateLoanSuccessfuly() {
+    void shouldCreateLoanSuccessfully() {
         // GIVEN
         LocalDate loanDateExpected = LocalDate.ofInstant(fixedInstant, ZoneOffset.UTC);
         LocalDate dueDateExpected = loanDateExpected.plusDays(14);
 
-        UUID licenseID = UUID.randomUUID();
+        UUID licenseId = UUID.randomUUID();
         String licenseCode = "COD1";
         BookLicense license = BookLicense.builder()
-                .id(licenseID)
+                .id(licenseId)
                 .licenseCode(licenseCode)
                 .book(Book.builder().id(bookId).title("Livro1").build())
                 .build();
@@ -170,12 +154,99 @@ public class LoanServiceTest {
                 .returns(dueDateExpected, Loan::getDueDate)
                 .returns(customerIdExpected, Loan::getCustomerId)
                 .extracting(Loan::getBookLicense)
-                .returns(licenseID, BookLicense::getId)
+                .returns(licenseId, BookLicense::getId)
                 .returns(bookId, bkLicense -> bkLicense.getBook().getId());
 
         assertThat(loanResponse)
                 .usingRecursiveComparison()
                 .ignoringFields("id")
                 .isEqualTo(responseExpected);
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException quando tentar devolver um empréstimo que não existe")
+    void shouldThrowExceptionWhenReturningNonExistentLoan() {
+        // GIVEN
+        UUID loanId = UUID.randomUUID();
+        when(loanRepository.findById(loanId))
+                .thenReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> loanService.returnBook(loanId, UUID.randomUUID()))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("loan.returning.non.existent");
+
+        verify(loanRepository, atMostOnce()).findById(loanId);
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceConflictException quando tentar devolver um empréstimo que já foi devolvido")
+    void shouldThrowExceptionWhenLoanWasAlreadyReturned() {
+        // GIVEN
+        UUID loanId = UUID.randomUUID();
+        Loan loanReturned = Loan.builder()
+                .id(loanId)
+                .returnDate(LocalDate.ofInstant(fixedInstant, ZoneOffset.UTC))
+                .build();
+
+        when(loanRepository.findById(any(UUID.class)))
+                .thenReturn(Optional.of(loanReturned));
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> loanService.returnBook(loanId, UUID.randomUUID()))
+                .isInstanceOf(ResourceConflictException.class)
+                .hasMessage("loan.already.returned");
+    }
+
+    @Test
+    @DisplayName("Deve realizar a devolução do empréstimo e retornar sucesso")
+    void shouldReturnBookSuccessfully() {
+        // GIVEN
+        UUID loanId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+
+        LocalDate returnDate = LocalDate.ofInstant(fixedInstant, ZoneOffset.UTC);
+        LocalDate loanDate = returnDate.minusDays(13);
+        LocalDate dueDateExpected = loanDate.plusDays(14);
+
+        Loan loan = Loan.builder()
+                .id(loanId)
+                .customerId(customerId)
+                .loanDate(loanDate)
+                .dueDate(dueDateExpected)
+                .bookLicense(BookLicense.builder().id(UUID.randomUUID())
+                        .licenseCode("COD1")
+                        .book(Book.builder().id(UUID.randomUUID())
+                                .title("Book of Test").build())
+                        .build())
+                .build();
+
+        when(loanRepository.findById(loanId)).thenReturn(Optional.of(loan));
+        when(loanRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ArgumentCaptor<Loan> loanCaptor = ArgumentCaptor.forClass(Loan.class);
+
+        // WHEN
+        LoanReturnResponseDTO returnResponse = loanService.returnBook(loanId, customerId);
+
+        // THEN
+        verify(loanRepository).save(loanCaptor.capture());
+        Loan loanReturned = loanCaptor.getValue();
+
+        assertThat(loanReturned)
+                .returns(loanId, Loan::getId)
+                .returns(customerId, Loan::getCustomerId)
+                .returns(loanDate, Loan::getLoanDate)
+                .returns(dueDateExpected, Loan::getDueDate)
+                .returns(returnDate, Loan::getReturnDate)
+                .returns(loan.getBookLicense(), Loan::getBookLicense);
+
+        assertThat(returnResponse)
+                .returns(loanId, LoanReturnResponseDTO::id)
+                .returns(loanDate, LoanReturnResponseDTO::loanDate)
+                .returns(dueDateExpected, LoanReturnResponseDTO::dueDate)
+                .returns(returnDate, LoanReturnResponseDTO::returnDate)
+                .returns("Book of Test", LoanReturnResponseDTO::bookTitle);
     }
 }
