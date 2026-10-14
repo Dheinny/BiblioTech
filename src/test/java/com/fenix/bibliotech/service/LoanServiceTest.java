@@ -7,6 +7,7 @@ import com.fenix.bibliotech.domain.policy.LoanPolicy;
 import com.fenix.bibliotech.dto.request.LoanRequestDTO;
 import com.fenix.bibliotech.dto.response.LoanResponseDTO;
 import com.fenix.bibliotech.dto.response.LoanReturnResponseDTO;
+import com.fenix.bibliotech.exception.AccessDeniedException;
 import com.fenix.bibliotech.exception.ResourceConflictException;
 import com.fenix.bibliotech.exception.ResourceNotFoundException;
 import com.fenix.bibliotech.mapper.LoanMapper;
@@ -248,5 +249,27 @@ public class LoanServiceTest {
                 .returns(dueDateExpected, LoanReturnResponseDTO::dueDate)
                 .returns(returnDate, LoanReturnResponseDTO::returnDate)
                 .returns("Book of Test", LoanReturnResponseDTO::bookTitle);
+    }
+
+    @Test
+    @DisplayName("Deve retornar AccessDeniedException quando o cliente tenta devolver um emprestimo que não percence a ele")
+    void shouldThrowExceptionWhenCustomerIsNotTheLoanOwner() {
+        // WHEN
+        UUID loanId = UUID.randomUUID();
+        UUID customerIdOwner = UUID.randomUUID();
+        UUID customerIdAttacker = UUID.randomUUID();
+
+        Loan loan = Loan.builder()
+                .id(loanId)
+                .customerId(customerIdOwner)
+                .build();
+
+        when(loanRepository.findById(loanId)).thenReturn(Optional.of(loan));
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> loanService.returnBook(loanId, customerIdAttacker))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessage("loan.return.not-owner");
+
     }
 }

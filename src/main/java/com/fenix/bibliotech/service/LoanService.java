@@ -7,6 +7,7 @@ import com.fenix.bibliotech.domain.policy.LoanPolicy;
 import com.fenix.bibliotech.dto.request.LoanRequestDTO;
 import com.fenix.bibliotech.dto.response.LoanResponseDTO;
 import com.fenix.bibliotech.dto.response.LoanReturnResponseDTO;
+import com.fenix.bibliotech.exception.AccessDeniedException;
 import com.fenix.bibliotech.exception.ResourceConflictException;
 import com.fenix.bibliotech.exception.ResourceNotFoundException;
 import com.fenix.bibliotech.mapper.LoanMapper;
@@ -69,18 +70,18 @@ public class LoanService {
             throw new ResourceConflictException("loan.already.returned");
         }
 
-        if (loan.getCustomerId().equals(customerID)) {
-            loan.setReturnDate(LocalDate.now(clock));
-
-            loanRepository.save(loan);
-
-            return LoanReturnResponseDTO.builder()
-                            .id(loan.getId()).bookTitle(loan.getBookLicense().getBook().getTitle())
-                            .loanDate(loan.getLoanDate())
-                            .dueDate(loan.getDueDate())
-                            .returnDate(loan.getReturnDate())
-                            .build();
+        if (!loan.getCustomerId().equals(customerID)) {
+            throw new AccessDeniedException(("loan.return.not-owner"));
         }
-        return null;
+        loan.setReturnDate(LocalDate.now(clock));
+
+        loanRepository.save(loan);
+
+        return LoanReturnResponseDTO.builder()
+                        .id(loan.getId()).bookTitle(loan.getBookLicense().getBook().getTitle())
+                        .loanDate(loan.getLoanDate())
+                        .dueDate(loan.getDueDate())
+                        .returnDate(loan.getReturnDate())
+                        .build();
     }
 }

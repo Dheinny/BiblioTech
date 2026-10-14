@@ -41,7 +41,14 @@ public class GlobalExceptionHandler {
         return builtErrorResponseEntity(ex, HttpStatus.CONFLICT, locale);
     }
 
-    //4. Handles Bean Validation errors to @Valid (required fields, etc)
+    //4. Handles Not Allowed
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleConflictException(AccessDeniedException ex,
+                                                                 Locale locale) {
+        return builtErrorResponseEntity(ex, HttpStatus.FORBIDDEN, locale);
+    }
+
+    //5. Handles Bean Validation errors to @Valid (required fields, etc)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex){
@@ -54,6 +61,7 @@ public class GlobalExceptionHandler {
         });
         return errors;
     }
+
 
     private ResponseEntity<ErrorResponse> builtErrorResponseEntity(BusinessException ex,
                                                                    HttpStatus httpStatus, Locale locale) {
